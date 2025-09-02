@@ -3,38 +3,38 @@
 
 /************************ SIUL2 ****************************/
 #define SIUL2_BASE           (0x40290000UL)
-#define SIUL2_MSCR48_OFF     (0x300UL)
-#define SIUL2_MSCR49_OFF     (0x304UL)
-#define SIUL2_MSCR74_OFF     (0x368UL)
-#define SIUL2_GPDO48_OFF     (0x1300UL+(48U+3U-2U*(48U%4U)))   /* PTB16 - Blue */
-#define SIUL2_GPDO49_OFF     (0x1300UL+(49U+3U-2U*(49U%4U)))   /* PTB17 - Green */
-#define SIUL2_GPDO74_OFF     (0x1300UL+(74U+3U-2U*(74U%4U)))   /* PTC10 - Red */
+#define SIUL2_GPDO_BASE      (SIUL2_BASE+0x1300)
 
-#define SIUL2_MSCR48         (*(volatile unsigned*)(SIUL2_BASE+SIUL2_MSCR48_OFF))
-#define SIUL2_MSCR49         (*(volatile unsigned*)(SIUL2_BASE+SIUL2_MSCR49_OFF))
-#define SIUL2_MSCR74         (*(volatile unsigned*)(SIUL2_BASE+SIUL2_MSCR74_OFF))
+#define SIUL2_MSCR48_OFF     (0x300)
+#define SIUL2_MSCR49_OFF     (0x304)
+#define SIUL2_MSCR74_OFF     (0x368)
 
-#define SIUL2_GPDO48         (*(volatile unsigned*)(SIUL2_BASE+SIUL2_GPDO48_OFF))
-#define SIUL2_GPDO49         (*(volatile unsigned*)(SIUL2_BASE+SIUL2_GPDO49_OFF))
-#define SIUL2_GPDO74         (*(volatile unsigned*)(SIUL2_BASE+SIUL2_GPDO74_OFF))
+#define SIUL2_MSCR48         (*(volatile uint32_t*)(SIUL2_BASE+SIUL2_MSCR48_OFF))
+#define SIUL2_MSCR49         (*(volatile uint32_t*)(SIUL2_BASE+SIUL2_MSCR49_OFF))
+#define SIUL2_MSCR74         (*(volatile uint32_t*)(SIUL2_BASE+SIUL2_MSCR74_OFF))
+
+#define SIUL2_GPDO48         (*(volatile uint8_t*)(SIUL2_GPDO_BASE+0x33))  /* PTB16 (Blue) */
+#define SIUL2_GPDO49         (*(volatile uint8_t*)(SIUL2_GPDO_BASE+0x32))  /* PTB17 (Green) */
+#define SIUL2_GPDO74         (*(volatile uint8_t*)(SIUL2_GPDO_BASE+0x49))  /* PTC10 (Red) */
 
 /* MSCRn fields */
-#define SSS_SBIT             0   /* [2:0] */
 #define OBE_BIT              21 
+#define SSS_SBIT             0   /* [2:0] */
 
 /* GPDOn fields */
 #define PDO_BIT              0
+/***********************************************************/
 
-#define RED_ON               (SIUL2_GPDO74 |= (1U << PDO_BIT))
-#define RED_OFF              (SIUL2_GPDO74 &= ~(1U << PDO_BIT))
-#define GREEN_ON             (SIUL2_GPDO49 |= (1U << PDO_BIT))
-#define GREEN_OFF            (SIUL2_GPDO49 &= ~(1U << PDO_BIT))
-#define BLUE_ON              (SIUL2_GPDO48 |= (1U << PDO_BIT))
-#define BLUE_OFF             (SIUL2_GPDO48 &= ~(1U << PDO_BIT))
+#define RED_ON               (SIUL2_GPDO74 |= (1 << PDO_BIT))
+#define RED_OFF              (SIUL2_GPDO74 &= ~(1 << PDO_BIT))
+#define GREEN_ON             (SIUL2_GPDO49 |= (1 << PDO_BIT))
+#define GREEN_OFF            (SIUL2_GPDO49 &= ~(1 << PDO_BIT))
+#define BLUE_ON              (SIUL2_GPDO48 |= (1 << PDO_BIT))
+#define BLUE_OFF             (SIUL2_GPDO48 &= ~(1 << PDO_BIT))
 
-void Pin_Init(void) {
+void SIUL2_Init(void) {
 
-    // SSS 피드를 0으로 만들어 GPIO 기능으로 설정
+    // SSS 필드를 0으로 만들어 GPIO 기능으로 설정
     // OBE 비트를 1로 만들어 출력 모드로 설정
 
     // RED_LED
@@ -51,10 +51,11 @@ void Pin_Init(void) {
 }
 
 int main(void) {
-
-    Pin_Init();          /* LED 핀들을 GPIO 출력으로 설정 */
-    ADC0_CLK_Enable();   /* MC_CGM, MC_ME 설정으로 ADC0 클럭 활성화 */
-    ADC0_Init();         /* ADC 모듈 초기화 */
+    
+    SIUL2_Init();          /* LED 핀들을 GPIO 출력으로 설정 */
+    ADC0_Clk_Enable();     /* ADC0 클럭 게이팅 */
+    ADC0_Clk_Generate();   /* ADC0 클럭 (CORE_CLK) 생성 */
+    ADC0_Init();           /* ADC 모듈 초기화 */
 
     // 모든 LED를 끈 상태에서 시작
     RED_OFF;
