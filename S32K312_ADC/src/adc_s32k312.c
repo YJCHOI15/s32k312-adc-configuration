@@ -22,13 +22,13 @@ void ADC0_Clk_Generate(void) {
 
 void ADC0_Init(void) {
     
-    ADC0_MCR |= (1 << PWDN_BIT);  /* ADC0 MCR 레지스터 설정을 위한 파워 다운 진입 */
+    // MCR 레지스터는 IDLE(변환 중이 아닐 때) 상태에서만 변경한다. 
     ADC0_MCR &= ~(1 << MODE_BIT); /* Single conversion Mode */
-    ADC0_MCR |= (1 << ADCLKSEL_SBIT); /* CORE_CLK을 2분주 -> AD_CLK(24Mhz) 생성 */
-    ADC0_MCR &= ~(1 << PWDN_BIT); /* ADC0 파워 다운 해제 */
 
-    ADC0_CALBISTREG &= ~(0b111 << RESN_SBIT);
-    ADC0_CALBISTREG |= (0b001 << RESN_SBIT);        /* 해상도 12비트 설정 */
+    ADC0_MCR |= (1 << PWDN_BIT);  /* MCR[ADCLKSEL] 설정을 위한 Power Down 진입 */
+    ADC0_MCR |= (1 << ADCLKSEL_SBIT); /* CORE_CLK을 2분주 -> AD_CLK(24Mhz) 생성 */
+    ADC0_MCR &= ~(1 << PWDN_BIT); /* ADC0 Power Down 해제 */
+
     ADC0_CALBISTREG |= (1 << TEST_EN_BIT);          /* 최초 1회 캘리브레이션 진행 */
     while(ADC0_CALBISTREG & (1 << C_T_BUSY_BIT));   /* 캘리브레이션 완료 대기 */
 
@@ -47,5 +47,7 @@ void ADC0_Start_Conversion(void) {
 uint16_t ADC0_Get_Result(void) {
     while(!(ADC0_PCDR0 & (1 << VALID_BIT)));   /* 아직 읽지 않은 새로운 데이터 확인 */
     
-    return (uint16_t)(ADC0_PCDR0 & CDATA_MASK);
+    // 기본 오른쪽 정렬 -> CDATA[14:0] 사용
+    // 12비트 해상도인 경우 CDATA[14:3] 변환값 -> 3비트 오른쪽 쉬프트 반환
+    return (uint16_t)((ADC0_PCDR0 & CDATA_MASK) >> 3);
 }

@@ -72,10 +72,9 @@
 #define VALID_BIT                   19
 #define OVERW_BIT                   18
 #define RESULT_SBIT                 16         /* [17:16] */
-#define CDATA_MASK                  (0xFFFF)   /* [15:0] */
+#define CDATA_MASK                  (0x7FF8)
 
 /* CALBISTREG fields */
-#define RESN_SBIT                   29         /* [31:29] */
 #define C_T_BUSY_BIT                15
 #define TEST_FAIL_BIT               3
 #define TEST_EN_BIT                 0
